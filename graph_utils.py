@@ -231,3 +231,32 @@ def matrix_recon(x):
     matrix = matrix + matrix.T
    
     return(matrix)   
+
+def thresholding(x, threshold = 0.20, zero_diag = True, direct = 'undirected'):
+    nnodes = x.shape[0]
+    if zero_diag == True:
+        np.fill_diagonal(x, 0)
+    
+    if direct == 'directed':
+        nlinks = nnodes**2 - nnodes
+        x_vector = x.reshape((1, nnodes**2))
+        to_get_links = int(nlinks * threshold)
+        sorting = np.argsort(x_vector)[0,::-1]
+        selection = sorting[0:to_get_links]
+        to_delete = np.delete(np.arange(0, nnodes**2, 1), selection)
+        x_thresholded = np.copy(x_vector[0,:])
+        x_thresholded[to_delete] = 0
+        x_thresholded = x_thresholded.reshape((nnodes, nnodes))
+    elif direct == 'undirected':
+        nlinks = (nnodes**2 - nnodes) // 2
+        x_vector = get_uptri(x)
+        to_get_links = int(nlinks * threshold)
+        sorting = np.argsort(x_vector)[::-1]
+        selection = sorting[0:to_get_links]
+        to_delete = np.delete(np.arange(0, nlinks, 1), selection)
+        x_vector[to_delete] = 0
+        x_thresholded = matrix_recon(x_vector)
+    else:
+        print('Invalid type of matrix -> direct options: undirected or directed')
+    
+    return(x_thresholded)

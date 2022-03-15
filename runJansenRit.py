@@ -55,10 +55,8 @@ import warnings
 warnings.filterwarnings("ignore")
 
 #Empirical Data
-placebo_rest = np.load('FC_placebo_rest.npy')
-placebo_task = np.load('FC_placebo_task.npy')
-diff_mat = placebo_task - placebo_rest
-diff_vec = np.sum(diff_mat,0)/89 #Change in nodal strength (task minus rest)
+diff_vec = np.load('diff_vec.npy') #Change in nodal strength (task minus rest)
+diff_vec /= 89 #Normalizing by the number of possible connections between nodes
 
 
 #Simulation parameters
