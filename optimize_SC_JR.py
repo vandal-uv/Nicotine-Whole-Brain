@@ -9,17 +9,16 @@ empirical Functionl Connectivity matrix using the original Structural Connectivi
 Connectivity was updated iteratively employing the point-to-point difference between empirical and simulated 
 Functional Connectivity matrices. Negative values within the optimized Structural Connectivity matrix were discarded.
 
-The code started with an alpha = 0.651 employing the human Structural Connectivity matrix used in [2]
+The code started with an alpha = 1.37 employing the human Structural Connectivity matrix used in [2]
 
 [1] Deco, G., Cruzat, J., Cabral, J., Tagliazucchi, E., Laufs, H., Logothetis, N. K., 
 & Kringelbach, M. L. (2019). Awakening: Predicting external stimulation to 
 force transitions between different brain states. Proceedings of the National 
 Academy of Sciences, 116(36), 18088-18097.
 
-[2] Deco, G., Cruzat, J., Cabral, J., Knudsen, G. M., Carhart-Harris, R. L., Whybrow, 
-P. C., ... & Kringelbach, M. L. (2018). Whole-brain multimodal neuroimaging 
-model using serotonin receptor maps explains non-linear functional effects of LSD. 
-Current biology, 28(19), 3065-3074.
+[2] Luppi, A. I., & Stamatakis, E. A. (2021). Combining network topology and 
+information theory to construct representative brain networks. Network Neuroscience, 
+5(1), 96-124.
 
 """
 
@@ -45,30 +44,30 @@ Ntotal = Neq + Nmax
 ttotal = JR.teq + JR.tmax #Total simulation time
 
 #Structural connectivity
-nnodes = 90 #number of nodes
-JR.nnodes = 90
+nnodes = 100 #number of nodes
+JR.nnodes = nnodes
 JR.M = nx.to_numpy_array(nx.watts_strogatz_graph(nnodes, 8, 0.05, 1)) #Toy matrix. Replace with the one used in [2]
 JR.norm = np.mean(np.sum(JR.M,0)) #Normalization factor
 
 #Node parameters
-JR.alpha = 0.651 * np.ones(nnodes) #Long-range pyramidal-pyramidal coupling
+JR.alpha = 1.37 * np.ones(nnodes) #Long-range pyramidal-pyramidal coupling
 JR.C4 = (0.3 + JR.alpha * 0.3 / 0.5) * 135 #Connectivity between inhibitory pop. and pyramidal pop.
 
 #Current copy of the SC matrix
 C = np.copy(JR.M)
 JR.norm = np.mean(np.sum(JR.M,0))
     
-seeds = 20 #Number of FCs computed in each iterations
-iters = 80 #Number of iterations
+seeds = 50 #Number of FCs computed in each iterations
+iters = 200 #Number of iterations
 fitting = np.zeros((4,iters)) #Matrix to save the results: fitting-related metrics across iterations
-all_SCs = np.zeros((90,90,iters)) #Array to save all SCs across iterations
+all_SCs = np.zeros((nnodes,nnodes,iters)) #Array to save all SCs across iterations
 epsilon = 0.01 #Convergence rate
 
 #JR update
 JR.update()
 
 for i in range(0,iters):
-    FC_BOLD = np.zeros((90,90))
+    FC_BOLD = np.zeros((nnodes,nnodes))
     for ss in range(0,seeds):
         all_SCs[:,:,i] = np.copy(C)
         
@@ -91,7 +90,7 @@ for i in range(0,iters):
         
         
         #Filter the BOLD-like signal between 0.01 and 0.1 Hz
-        Fmin, Fmax = 0.01, 0.1
+        Fmin, Fmax = 0.01, 0.08
         a0, b0 = signal.bessel(3, [2 * BOLD_dt * Fmin, 2 * BOLD_dt * Fmax], btype = 'bandpass')
         BOLD_filt = signal.filtfilt(a0, b0, BOLD_signals[:,:], axis = 0)        
         cut0, cut1 = int(Neq / (BOLD_dt / JR.dt / JR.downsamp)), int((Nmax - Neq) / (BOLD_dt / JR.dt / JR.downsamp))
@@ -115,11 +114,8 @@ for i in range(0,iters):
     
     #Updating the C matrix
     C += graph_utils.matrix_recon(epsilon*(dist_placebo_rest - dist_sim))
-    C = graph_utils.thresholding(C,0.3) #Fixing density
     C[C < 0] = 0 #Discarding negative values
-    C = C * 138 / np.sum(C) #Fixing the sum of weights
     JR.M = C #Update the SC within the model
-    JR.norm = np.mean(np.sum(JR.M,0)) #Update the normalization factor
 
 
 

@@ -36,7 +36,7 @@ seed = 0 #Random seed
 #Networks parameters
 
 #Structural connectivity
-nnodes = 90 #number of nodes
+nnodes = 100 #number of nodes
 M = nx.to_numpy_array(nx.watts_strogatz_graph(nnodes, 8, 0.05, 1)) #Toy matrix. Replace with the one used in [2]
 norm = np.mean(np.sum(M,0)) #Normalization factor
 
@@ -44,8 +44,8 @@ norm = np.mean(np.sum(M,0)) #Normalization factor
 a = 100 #Inverse of the characteristic time constant for EPSPs (1/sec)
 ad = 50 #Inverse of the characteristic time constant for long-range EPSPs (1/sec)
 b = 50 #Inverse of the characteristic time constant for IPSPs (1/sec)
-p = 4.8 * np.ones(nnodes) #Basal input to pyramidal population
-sigma = 0.03162 #Scaling noise factor
+p = 5.4 * np.ones(nnodes) #Basal input to pyramidal population
+sigma = 0.032 #Scaling noise factor
 
 C = 135 #Global synaptic connectivity
 C1 = C * 1 #Connectivity between pyramidal pop. and excitatory pop.
@@ -72,6 +72,7 @@ ic = np.ones((1, nnodes)) * np.array([0.131,  0.171, 0.343, 0.21,
 
 def update():
     f1.recompile()
+    noise.recompile()
 
 @vectorize([float64(float64,float64)],nopython=True)
 #Sigmoid function
@@ -203,7 +204,7 @@ def ParamsNode():
     pardict={}
     for var in ('a','b','ad','A','B','r0',
                 'r1','r2','e0','v0','C','C1','C2','C3',
-                'C4','alpha','p','sigma'):
+                'C4','alpha','beta','p','sigma'):
         pardict[var]=eval(var)
         
     return pardict
@@ -217,7 +218,7 @@ def ParamsNet():
 
 def ParamsSim():
     pardict={}
-    for var in ('tmax','teq','dt','downsamp'):
+    for var in ('tmax','teq','dt','downsamp','seed'):
         pardict[var]=eval(var)
         
     return pardict

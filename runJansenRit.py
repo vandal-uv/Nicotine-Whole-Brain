@@ -38,10 +38,9 @@ task performance. Journal of Neuroscience, 33(14), 5903-5914.
 Original SC matrix from:
 (not the same as the optimized connectivity)    
     
-[7] Deco, G., Cruzat, J., Cabral, J., Knudsen, G. M., Carhart-Harris, R. L., Whybrow,
-P. C., ... & Kringelbach, M. L. (2018). Whole-brain multimodal neuroimaging model using 
-serotonin receptor maps explains non-linear functional effects of LSD. Current biology, 
-28(19), 3065-3074.
+[7] Luppi, A. I., & Stamatakis, E. A. (2021). Combining network topology and 
+information theory to construct representative brain networks. Network Neuroscience, 
+5(1), 96-124.
 
 """
 
@@ -55,8 +54,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 #Empirical Data
-diff_vec = np.load('diff_vec.npy') #Change in nodal strength (task minus rest)
-diff_vec /= 89 #Normalizing by the number of possible connections between nodes
+diff_vec = np.load('vector_task.npy') #Change in nodal strength (task minus rest)
 
 
 #Simulation parameters
@@ -70,24 +68,24 @@ Nmax = int(JR.tmax / JR.dt / JR.downsamp)
 Ntotal = Neq + Nmax #Total number of points
 ttotal = JR.teq + JR.tmax #Total simulation time
 
-JR.nnodes = 90 #number of nodes
+JR.nnodes = 100 #number of nodes
 nnodes = JR.nnodes     
 
 #Optimized connectivity
-JR.M = np.load('SC_optimized_Nicotine_JR.npy')        
-JR.norm = np.mean(np.sum(JR.M,0))                      
+JR.M = np.load('SC_optimized_Nicotine_JR.npy')       
+JR.norm = 3.34632 #Same as the original matrix       
 
 #Parameters for each condition
-#Placebo Rest: alpha = 0.648, beta = 0
-#Placebo Task: alpha = 0.648, beta = 0.58
-#Nicotine Rest: alpha = 0.644, beta = 0
-#Nicotine Task: alpha = 0.641, beta = 0.58 
+#Placebo Rest: alpha = 1.315, beta = 0
+#Placebo Task: alpha = 1.315, beta = 0.023
+#Nicotine Rest: alpha = 1.290, beta = 0
+#Nicotine Task: alpha = 1.240, beta = 0.023
 
 #Node parameters
-JR.alpha = 0.648 * np.ones(nnodes) #Long-range pyramidal-pyramidal coupling   
+JR.alpha = 1.315 * np.ones(nnodes) #Long-range pyramidal-pyramidal coupling   
 JR.C4 = (0.3 + 0.3 / 0.5 * JR.alpha) * JR.C #Connectivity between inhibitory pop. and pyramidal pop.
 beta = 0 #Input slope 
-JR.p = 4.8 - diff_vec * beta #Heterogeneous external inputs
+JR.p = 5.4 + diff_vec * beta #Heterogeneous external inputs
 
 #Random seed
 JR.seed = 0
@@ -115,7 +113,7 @@ BOLD_signals = signal.decimate(BOLD_signals, n = 3,
 
 
 #Filter the BOLD-like signal between 0.01 and 0.1 Hz
-Fmin, Fmax = 0.01, 0.1
+Fmin, Fmax = 0.01, 0.08
 a0, b0 = signal.bessel(3, [2 * BOLD_dt * Fmin, 2 * BOLD_dt * Fmax], btype = 'bandpass')
 BOLD_filt = signal.filtfilt(a0, b0, BOLD_signals[:,:], axis = 0)        
 cut0, cut1 = int(Neq / (BOLD_dt / JR.dt / JR.downsamp)), int((Nmax - Neq) / (BOLD_dt / JR.dt / JR.downsamp))
